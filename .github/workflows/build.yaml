@@ -21,6 +21,6 @@ jobs:
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASSWORD }}
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/sba-ratings:${{ env.VERSION }}-${{ env.TIMESTAMP }}-${{ env.COMMIT_HASH }}
+        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.VERSION }}-${{ env.TIMESTAMP }}-${{ env.COMMIT_HASH }}
       - name: Push the Docker image
-        run: docker push ${{ secrets.DOCKER_USER }}/sba-ratings:${{ env.VERSION }}-${{ env.TIMESTAMP }}-${{ env.COMMIT_HASH }}
+        run: docker push ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.VERSION }}-${{ env.TIMESTAMP }}-${{ env.COMMIT_HASH }}
