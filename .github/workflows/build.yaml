@@ -9,18 +9,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
       - name: Set up date and version
         id: vars
         run: |
           TIMESTAMP=$(date +'%Y.%m.%d.%H.%M')
           COMMIT_HASH=$(git rev-parse --short "$GITHUB_SHA")
           VERSION=$(cat version.txt)
-          echo "TIMESTAMP=${TIMESTAMP}" >> $GITHUB_ENV
-          echo "COMMIT_HASH=${COMMIT_HASH}" >> $GITHUB_ENV
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          IMAGE_SUFFIX="${VERSION}-${TIMESTAMP}-${COMMIT_HASH}"
+          echo "IMAGE_SUFFIX=${IMAGE_SUFFIX}" >> $GITHUB_ENV
+
+      # Set up python
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.12'
+
+      # Install necessary python dependencies, no need to install unittest since it comes with standard library
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      # Run Unit Tests Before Image Creation
+      - name: Run Unit Tests (Pre-Build)
+        run: |
+          python -m unittest test.py
+
+      # Install Grype for image vulnerability scanning
+      - name: Install Grype
+        id: install-grype
+        run: curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
+
+      # Login to dockerhub
       - name: Login to Docker Hub
         run: docker login -u ${{ secrets.DOCKER_USER }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      # Build the image
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.VERSION }}-${{ env.TIMESTAMP }}-${{ env.COMMIT_HASH }}
+        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }}
+
+        # Scan Image for Vulnerabilities
+      - name: Scan Image for Vulnerabilities
+        id: vul-scan
+        run: grype -f critical ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }}
+
+      # Run the same unit test within docker container
+      - name: Run Unit Tests (Post-Build)
+        run: |
+          docker run --rm ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }} \
+          python -m unittest test.py
+
+      # Push the image
       - name: Push the Docker image
-        run: docker push ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.VERSION }}-${{ env.TIMESTAMP }}-${{ env.COMMIT_HASH }}
+        run: docker push ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }}
