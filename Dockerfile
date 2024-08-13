@@ -1,5 +1,5 @@
 # Setting the base image
-FROM python:slim
+FROM python:alpine3.19
 
 # Setting environment variables
 ENV FLASK_APP=app.py
@@ -18,5 +18,5 @@ COPY . .
 EXPOSE 5000
 
 # Default entrypoint
-ENTRYPOINT ["/bin/sh", "-c"]
+#ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["flask", "run"]
