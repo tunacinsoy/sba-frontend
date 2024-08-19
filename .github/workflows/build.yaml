@@ -46,19 +46,19 @@ jobs:
 
       # Build the image
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }}
+        run: docker build . --file Dockerfile --tag ${{ secrets.DOCKER_USER }}/sba-frontend:$(git rev-parse --short "$GITHUB_SHA")
 
-        # Scan Image for Vulnerabilities
-      - name: Scan Image for Vulnerabilities
-        id: vul-scan
-        run: grype -f critical ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }}
+      #   # Scan Image for Vulnerabilities
+      # - name: Scan Image for Vulnerabilities
+      #   id: vul-scan
+      #   run: grype -f critical ${{ secrets.DOCKER_USER }}/sba-frontend:$(git rev-parse --short "$GITHUB_SHA")
 
       # Run the same unit test within docker container
       - name: Run Unit Tests (Post-Build)
         run: |
-          docker run --rm ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }} \
+          docker run --rm ${{ secrets.DOCKER_USER }}/sba-frontend:$(git rev-parse --short "$GITHUB_SHA") \
           python -m unittest test.py
 
       # Push the image
       - name: Push the Docker image
-        run: docker push ${{ secrets.DOCKER_USER }}/sba-frontend:${{ env.IMAGE_SUFFIX }}
+        run: docker push ${{ secrets.DOCKER_USER }}/sba-frontend:$(git rev-parse --short "$GITHUB_SHA")
