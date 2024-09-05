@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, session, send_from_directory
+from flask import Flask, render_template, request, jsonify, session
 import requests
 import base64
 from flask_session import Session
@@ -13,12 +13,6 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 bcrypt = Bcrypt(app)
-
-
-# Route to serve Let's Encrypt challenge files
-@app.route("/.well-known/acme-challenge/<filename>")
-def acme_challenge(filename):
-    return send_from_directory("static/.well-known/acme-challenge", filename)
 
 
 @app.route("/")
